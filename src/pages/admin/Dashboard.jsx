@@ -7,7 +7,6 @@ import {
   FaUserShield,
   FaBookmark,
   FaShareAlt,
-  FaDollarSign,
   FaExclamationCircle,
 } from "react-icons/fa";
 import { motion } from "framer-motion";
@@ -33,6 +32,8 @@ import {
   getTrendsAnalytics,
   getActivityLogs,
   getPushNotifications,
+  getWalletStats,
+  getWalletBalance,
 } from "../../api";
 
 export default function Dashboard() {
@@ -47,6 +48,10 @@ export default function Dashboard() {
     savedOpportunities: 0,
     referrals: 0,
     revenue: 0,
+    walletBalance: 0,
+    totalTransactions: 0,
+    subscriptionRevenue: 0,
+    adCampaignRevenue: 0,
   });
   const [chartData, setChartData] = useState([]);
   const [activity, setActivity] = useState([]);
@@ -68,6 +73,8 @@ export default function Dashboard() {
       getReferrals(),
       getRevenueAnalytics(),
       getTrendsAnalytics(),
+      getWalletStats(),
+      getWalletBalance(),
     ])
       .then(
         ([
@@ -79,6 +86,8 @@ export default function Dashboard() {
           referralsRes,
           revenueRes,
           trendsRes,
+          walletStatsRes,
+          walletBalanceRes,
         ]) => {
           // Opportunities
           const allOpps = oppRes.data;
@@ -103,8 +112,17 @@ export default function Dashboard() {
           }));
           // Referrals
           setKpi((k) => ({ ...k, referrals: referralsRes.data.length }));
-          // Revenue
-          setKpi((k) => ({ ...k, revenue: revenueRes.data.total || 0 }));
+          // Revenue from wallet stats
+          if (walletStatsRes.data) {
+            setKpi((k) => ({
+              ...k,
+              revenue: walletStatsRes.data.total_revenue || 0,
+              walletBalance: walletStatsRes.data.total_balance || 0,
+              totalTransactions: walletStatsRes.data.total_transactions || 0,
+              subscriptionRevenue: walletStatsRes.data.subscription_revenue || 0,
+              adCampaignRevenue: walletStatsRes.data.ad_campaign_revenue || 0,
+            }));
+          }
           // Chart Data
           setChartData(trendsRes.data.data || []);
         }
@@ -226,7 +244,7 @@ export default function Dashboard() {
               <div className="text-gray-400">No recent activity.</div>
             ) : (
               <ul className="space-y-4">
-                {activity.map((log) => (
+                {activity.slice(0, 5).map((log) => (
                   <li key={log.id} className="flex items-center gap-3">
                     <ActivityIcon type={log.type} />
                     <span className="font-semibold text-gray-800">
@@ -343,11 +361,18 @@ export default function Dashboard() {
               color={theme.primaryDark}
             />
             <KpiCard
-              icon={<FaDollarSign />}
-              label="Revenue"
-              value={`$${kpi.revenue}`}
-              desc="Sponsored, Affiliate, Premium"
+              icon={<span className="text-2xl">₦</span>}
+              label="Total Revenue"
+              value={`₦${kpi.revenue.toLocaleString()}`}
+              desc="All transactions"
               color={theme.success}
+            />
+            <KpiCard
+              icon={<span className="text-2xl">₦</span>}
+              label="Wallet Balance"
+              value={`₦${kpi.walletBalance.toLocaleString()}`}
+              desc="Current balance"
+              color={theme.primary}
             />
           </div>
 

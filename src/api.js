@@ -1,7 +1,7 @@
 import axios from "axios";
 
 // Set your API base URL here
-const BASE_URL = "http://127.0.0.1:8000/api";
+const BASE_URL = "http://localhost:8000/api";
 
 export const api = axios.create({
   baseURL: BASE_URL,
@@ -86,6 +86,8 @@ export const getSponsoredOpportunities = () =>
   api.get("/sponsored-opportunities");
 export const createSponsoredOpportunity = (data) =>
   api.post("/sponsored-opportunities", data);
+export const getSponsoredOpportunity = (id) =>
+  api.get(`/sponsored-opportunities/${id}`);
 export const updateSponsoredOpportunity = (id, data) =>
   api.put(`/sponsored-opportunities/${id}`, data);
 export const deleteSponsoredOpportunity = (id) =>
@@ -179,3 +181,49 @@ export const deletePushNotification = (id) =>
 export const getSavedOpportunities = () => api.get("/saved-opportunities");
 
 export const getActivityLogs = () => api.get("/activity-logs");
+
+// Subscription Plans APIs
+export const getSubscriptionPlans = () => api.get("/admin/subscription-plans");
+export const createSubscriptionPlan = (data) => api.post("/admin/subscription-plans", data);
+export const updateSubscriptionPlan = (id, data) => api.put(`/admin/subscription-plans/${id}`, data);
+export const deleteSubscriptionPlan = (id) => api.delete(`/admin/subscription-plans/${id}`);
+
+// User Subscriptions APIs
+export const getUserSubscriptionStatus = () => api.get("/subscriptions/user-status");
+export const createSubscription = (data) => api.post("/subscriptions/create", data);
+export const cancelSubscription = () => api.post("/subscriptions/cancel");
+
+// User Settings APIs
+export const getUserSettings = () => api.get("/user/settings");
+export const updateUserSettings = (data) => api.put("/user/settings", data);
+
+// Ad Management APIs
+export const getAdCampaigns = () => api.get("/admin/ad-campaigns");
+export const approveAdCampaign = (campaignId) => api.post(`/admin/ad-campaigns/${campaignId}/approve`);
+export const rejectAdCampaign = (campaignId) => api.post(`/admin/ad-campaigns/${campaignId}/reject`);
+export const getAdCampaignStats = (campaignId) => api.get(`/admin/ad-campaigns/${campaignId}/stats`);
+
+// Ad Settings APIs
+export const getAdSettings = () => api.get("/admin/ad-settings");
+export const updateAdSettings = (id, data) => api.post(`/admin/ad-settings/${id}`, data);
+export const getAdAnalytics = () => api.get("/admin/ad-analytics");
+export const getAdRevenue = () => api.get("/admin/ad-revenue");
+
+// Admin Wallet APIs
+export const getWalletBalance = () => api.get("/admin/wallet/balance");
+export const getWalletTransactions = (params) => api.get("/admin/wallet/transactions", { params });
+export const getWalletStats = () => api.get("/admin/wallet/stats");
+export const getWalletAdRevenueAnalytics = () => api.get("/admin/wallet/ad-revenue-analytics");
+export const getWalletRevenueSummary = (params) => api.get("/admin/wallet/revenue-summary", { params });
+
+// Points Management APIs
+export const getPointsSettings = () => api.get("/admin/points/settings");
+export const updatePointsSettings = (data) => api.post("/admin/points/settings", data);
+export const getPointsOverview = () => api.get("/admin/points/overview");
+
+// Withdrawal Management APIs
+export const getWithdrawalRequests = (params) => api.get("/admin/withdrawals/requests", { params });
+export const getWithdrawalDetails = (id) => api.get(`/admin/withdrawals/requests/${id}`);
+export const approveWithdrawal = (id, data) => api.post(`/admin/withdrawals/requests/${id}/approve`, data);
+export const rejectWithdrawal = (id, data) => api.post(`/admin/withdrawals/requests/${id}/reject`, data);
+export const getWithdrawalStats = () => api.get("/admin/withdrawals/requests/stats");

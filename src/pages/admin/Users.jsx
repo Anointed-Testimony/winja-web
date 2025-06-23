@@ -8,6 +8,9 @@ import {
   FaUserShield,
   FaUserTie,
   FaPlus,
+  FaCrown,
+  FaDollarSign,
+  FaCalendarAlt,
 } from "react-icons/fa";
 import theme from "../../theme";
 import {
@@ -32,6 +35,92 @@ const roleIcons = {
   Partner: <FaUserTie className="inline mr-1" />,
   User: <FaEye className="inline mr-1" />,
 };
+
+// Add PremiumUserSection component
+function PremiumUserSection({ users, onViewUser }) {
+  const [premiumUsers, setPremiumUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    // Filter premium users
+    const premium = users.filter(user => user.is_premium);
+    setPremiumUsers(premium);
+    setLoading(false);
+  }, [users]);
+
+  if (loading) return <div className="text-gray-600 text-center py-8">Loading premium users...</div>;
+  if (error) return <div className="text-red-500 text-center py-8">{error}</div>;
+
+  return (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <h3 className="text-xl font-bold" style={{ color: theme.primary }}>
+          Premium Users
+        </h3>
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-gray-600 font-medium">
+            Total: {premiumUsers.length}
+          </span>
+        </div>
+      </div>
+
+      {premiumUsers.length === 0 ? (
+        <div className="text-center py-12">
+          <div className="text-gray-400 text-lg mb-2">No premium users found</div>
+          <div className="text-gray-500 text-sm">Premium users will appear here when they subscribe</div>
+        </div>
+      ) : (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {premiumUsers.map((user) => (
+          <div
+            key={user.id}
+              className="rounded-2xl shadow-lg p-6 border border-gray-100 bg-white hover:shadow-xl transition-shadow"
+          >
+            <div className="flex justify-between items-start mb-4">
+              <div>
+                  <h4 className="text-lg font-bold text-gray-900">{user.name}</h4>
+                <p className="text-gray-600 text-sm">{user.email}</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <FaCrown className="text-yellow-500" />
+                <span className="text-sm font-medium text-yellow-600">
+                  Premium
+                </span>
+              </div>
+            </div>
+            <div className="space-y-4">
+              <div className="flex items-center gap-2">
+                <FaDollarSign className="text-green-500" />
+                  <span className="text-sm text-gray-700">
+                  Plan: {user.subscription?.plan?.name || "N/A"}
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <FaCalendarAlt className="text-blue-500" />
+                  <span className="text-sm text-gray-700">
+                  Expires:{" "}
+                  {user.premium_until
+                    ? new Date(user.premium_until).toLocaleDateString()
+                    : "N/A"}
+                </span>
+              </div>
+              <div className="pt-4">
+                <button
+                    onClick={() => onViewUser && onViewUser(user)}
+                    className="w-full px-4 py-2 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:from-purple-700 hover:to-indigo-700 transition-all duration-200 font-medium shadow-md hover:shadow-lg"
+                >
+                  View Details
+                </button>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+      )}
+    </div>
+  );
+}
 
 export default function Users() {
   const [search, setSearch] = useState("");
@@ -231,18 +320,18 @@ export default function Users() {
       <div className="flex flex-col gap-8">
         <div className="flex flex-wrap gap-4 items-center justify-between mb-4">
           <div className="flex gap-4 items-center">
-            <div
-              className="flex gap-2 items-center bg-white/70 rounded-xl px-3 py-2 shadow border"
-              style={{ borderColor: theme.border }}
-            >
-              <FaSearch className="text-gray-400" />
-              <input
-                type="text"
-                placeholder="Search users by name or email..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="px-4 py-2 rounded-lg border-0 focus:outline-none bg-transparent text-gray-900 min-w-[220px]"
-              />
+          <div
+            className="flex gap-2 items-center bg-white/70 rounded-xl px-3 py-2 shadow border"
+            style={{ borderColor: theme.border }}
+          >
+            <FaSearch className="text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search users by name or email..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="px-4 py-2 rounded-lg border-0 focus:outline-none bg-transparent text-gray-900 min-w-[220px]"
+            />
             </div>
             <button
               onClick={() => setShowCreateModal(true)}
@@ -313,7 +402,7 @@ export default function Users() {
               <tbody>
                 {filteredUsers.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="text-center py-10 text-gray-400">
+                    <td colSpan={7} className="text-center py-10 text-gray-600">
                       No users found.
                     </td>
                   </tr>
@@ -324,13 +413,13 @@ export default function Users() {
                       className="border-b last:border-b-0 hover:bg-[#f5f3ff]/60 transition"
                       style={{ borderColor: theme.border }}
                     >
-                      <td className="py-4 px-4 font-semibold flex items-center gap-2">
-                        <span className="w-9 h-9 rounded-full bg-gradient-to-br from-[#ede9fe] to-[#a78bfa] flex items-center justify-center text-lg font-bold shadow">
+                      <td className="py-4 px-4 font-semibold text-gray-800 flex items-center gap-2">
+                        <span className="w-9 h-9 rounded-full bg-gradient-to-br from-[#ede9fe] to-[#a78bfa] flex items-center justify-center text-lg font-bold text-white shadow">
                           {user.name[0]}
                         </span>
                         {user.name}
                       </td>
-                      <td className="py-4 px-4">{user.email}</td>
+                      <td className="py-4 px-4 text-gray-700">{user.email}</td>
                       <td className="py-4 px-4">
                         <span
                           className={`px-2 py-1 rounded-lg text-xs font-bold shadow ${
@@ -398,7 +487,7 @@ export default function Users() {
                       </td>
                       <td className="py-4 px-4 flex gap-2">
                         <button
-                          className="p-2 rounded-lg hover:bg-[#ede9fe] transition"
+                          className="p-2 rounded-lg hover:bg-[#ede9fe] transition text-gray-600 hover:text-[#5b2be7]"
                           title="View Profile"
                           onClick={() => handleViewProfile(user)}
                           disabled={profileLoading}
@@ -406,7 +495,7 @@ export default function Users() {
                           <FaEye />
                         </button>
                         <button
-                          className="p-2 rounded-lg hover:bg-[#ede9fe] transition"
+                          className="p-2 rounded-lg hover:bg-[#ede9fe] transition text-gray-600 hover:text-[#5b2be7]"
                           title="Edit Role"
                           onClick={() => handleEditRole(user)}
                           disabled={editRoleLoading}
@@ -415,7 +504,7 @@ export default function Users() {
                         </button>
                         {user.status === "banned" ? (
                           <button
-                            className="p-2 rounded-lg hover:bg-green-100 text-green-600 transition"
+                            className="p-2 rounded-lg hover:bg-green-100 text-green-600 transition font-medium text-sm"
                             title="Activate"
                             onClick={() => handleActivate(user)}
                             disabled={loading}
@@ -424,7 +513,7 @@ export default function Users() {
                           </button>
                         ) : user.status === "inactive" ? (
                           <button
-                            className="p-2 rounded-lg hover:bg-green-100 text-green-600 transition"
+                            className="p-2 rounded-lg hover:bg-green-100 text-green-600 transition font-medium text-sm"
                             title="Activate"
                             onClick={() => handleActivate(user)}
                             disabled={loading}
@@ -434,7 +523,7 @@ export default function Users() {
                         ) : (
                           <>
                             <button
-                              className="p-2 rounded-lg hover:bg-yellow-100 text-yellow-600 transition"
+                              className="p-2 rounded-lg hover:bg-yellow-100 text-yellow-600 transition font-medium text-sm"
                               title="Deactivate"
                               onClick={() => handleDeactivate(user)}
                               disabled={loading}
@@ -555,19 +644,19 @@ export default function Users() {
                     </ul>
                   </div>
                   <div className="flex gap-2 mt-4">
-                    <button className="px-4 py-2 rounded-lg bg-[#ede9fe] text-[#5b2be7] font-semibold shadow">
+                    <button className="px-4 py-2 rounded-lg bg-[#ede9fe] text-[#5b2be7] font-semibold shadow hover:bg-[#ddd6fe] transition">
                       Edit Role
                     </button>
                     {selectedUser.status === "banned" ? (
                       <button
-                        className="px-4 py-2 rounded-lg bg-green-100 text-green-600 font-semibold shadow"
+                        className="px-4 py-2 rounded-lg bg-green-100 text-green-700 font-semibold shadow hover:bg-green-200 transition"
                         onClick={() => handleActivate(selectedUser)}
                       >
                         Activate
                       </button>
                     ) : selectedUser.status === "inactive" ? (
                       <button
-                        className="px-4 py-2 rounded-lg bg-green-100 text-green-600 font-semibold shadow"
+                        className="px-4 py-2 rounded-lg bg-green-100 text-green-700 font-semibold shadow hover:bg-green-200 transition"
                         onClick={() => handleActivate(selectedUser)}
                       >
                         Activate
@@ -575,13 +664,13 @@ export default function Users() {
                     ) : (
                       <>
                         <button
-                          className="px-4 py-2 rounded-lg bg-yellow-100 text-yellow-600 font-semibold shadow"
+                          className="px-4 py-2 rounded-lg bg-yellow-100 text-yellow-700 font-semibold shadow hover:bg-yellow-200 transition"
                           onClick={() => handleDeactivate(selectedUser)}
                         >
                           Deactivate
                         </button>
                         <button
-                          className="px-4 py-2 rounded-lg bg-red-100 text-red-600 font-semibold shadow"
+                          className="px-4 py-2 rounded-lg bg-red-100 text-red-700 font-semibold shadow hover:bg-red-200 transition"
                           onClick={() => handleBan(selectedUser)}
                         >
                           Ban
@@ -624,14 +713,14 @@ export default function Users() {
               </select>
               <div className="flex gap-2 justify-end">
                 <button
-                  className="px-4 py-2 rounded-lg bg-gray-100 text-gray-600 font-semibold shadow"
+                  className="px-4 py-2 rounded-lg bg-gray-100 text-gray-700 font-semibold shadow hover:bg-gray-200 transition"
                   onClick={() => setEditRoleUser(null)}
                   disabled={editRoleLoading}
                 >
                   Cancel
                 </button>
                 <button
-                  className="px-4 py-2 rounded-lg bg-[#5b2be7] text-white font-semibold shadow disabled:opacity-60"
+                  className="px-4 py-2 rounded-lg bg-[#5b2be7] text-white font-semibold shadow disabled:opacity-60 hover:bg-[#4c1d95] transition"
                   onClick={handleSaveRole}
                   disabled={editRoleLoading}
                 >
@@ -888,18 +977,18 @@ export default function Users() {
                   </>
                 )}
 
-                <div className="flex justify-end gap-3 mt-6">
+                <div className="flex gap-2 justify-end">
                   <button
-                    type="button"
+                    className="px-4 py-2 rounded-lg bg-gray-100 text-gray-700 font-semibold shadow hover:bg-gray-200 transition"
                     onClick={() => setShowCreateModal(false)}
-                    className="px-4 py-2 text-gray-600 hover:text-gray-800"
+                    disabled={createUserLoading}
                   >
                     Cancel
                   </button>
                   <button
-                    type="submit"
+                    className="px-4 py-2 rounded-lg bg-[#5b2be7] text-white font-semibold shadow disabled:opacity-60 hover:bg-[#4c1d95] transition"
+                    onClick={handleCreateUser}
                     disabled={createUserLoading}
-                    className="px-4 py-2 bg-gradient-to-r from-purple-500 to-indigo-500 text-white rounded-lg shadow hover:shadow-lg transition disabled:opacity-50"
                   >
                     {createUserLoading ? "Creating..." : "Create User"}
                   </button>
@@ -908,6 +997,11 @@ export default function Users() {
             </div>
           </div>
         )}
+
+        {/* Premium Users Section */}
+        <div className="bg-white rounded-2xl shadow-xl p-8">
+          <PremiumUserSection users={users} onViewUser={handleViewProfile} />
+        </div>
       </div>
     </AdminLayout>
   );

@@ -14,6 +14,7 @@ import {
   FaLayerGroup,
   FaTimesCircle,
   FaStar,
+  FaEye,
 } from "react-icons/fa";
 import theme from "../../theme";
 import {
@@ -116,6 +117,9 @@ export default function Opportunities() {
   const [sponsorLoading, setSponsorLoading] = useState(false);
   const [sponsorError, setSponsorError] = useState("");
   const [partners, setPartners] = useState([]);
+  const [showSponsoredDetailsModal, setShowSponsoredDetailsModal] = useState(null);
+  const [sponsoredDetails, setSponsoredDetails] = useState(null);
+  const [sponsoredDetailsLoading, setSponsoredDetailsLoading] = useState(false);
 
   useEffect(() => {
     async function fetchTypesAndOpportunities() {
@@ -449,6 +453,30 @@ export default function Opportunities() {
       console.error("Sponsor error:", err, err.response && err.response.data);
     } finally {
       setSponsorLoading(false);
+    }
+  };
+
+  // Handle viewing sponsored opportunity details
+  const handleViewSponsoredDetails = async (opportunityId) => {
+    setSponsoredDetailsLoading(true);
+    try {
+      // Find the sponsored opportunity from the list
+      const sponsoredRes = await getSponsoredOpportunities();
+      const sponsoredArr = Array.isArray(sponsoredRes.data)
+        ? sponsoredRes.data
+        : Array.isArray(sponsoredRes.data.data)
+        ? sponsoredRes.data.data
+        : [];
+      const sponsoredOpp = sponsoredArr.find(so => so.opportunity_id === opportunityId);
+      
+      if (sponsoredOpp) {
+        setSponsoredDetails(sponsoredOpp);
+        setShowSponsoredDetailsModal(opportunityId);
+      }
+    } catch (err) {
+      console.error("Error fetching sponsored details:", err);
+    } finally {
+      setSponsoredDetailsLoading(false);
     }
   };
 
@@ -793,15 +821,31 @@ export default function Opportunities() {
                         <FaTrash />
                       </button>
                       {isSponsored ? (
-                        <span
-                          className="px-2 py-1 rounded-lg text-xs font-bold"
+                        <div className="flex gap-2">
+                          <button
+                            className="p-2 rounded-lg shadow transition"
                           style={{
-                            background: theme.success + "22",
-                            color: theme.success,
+                              background: theme.success,
+                              color: theme.surface,
+                            }}
+                            title="Sponsored"
+                            disabled={listingLoading}
+                          >
+                            <FaStar />
+                          </button>
+                          <button
+                            className="p-2 rounded-lg shadow transition"
+                            style={{
+                              background: theme.info,
+                              color: theme.surface,
                           }}
-                        >
-                          Sponsored
-                        </span>
+                            title="View Details"
+                            onClick={() => handleViewSponsoredDetails(o.id)}
+                            disabled={sponsoredDetailsLoading}
+                          >
+                            <FaEye />
+                          </button>
+                        </div>
                       ) : (
                         <button
                           className="p-2 rounded-lg shadow transition"
@@ -1641,6 +1685,99 @@ export default function Opportunities() {
                 )}
               </button>
             </div>
+          </div>
+        </Modal>
+      )}
+
+      {/* Sponsored Opportunity Details Modal */}
+      {showSponsoredDetailsModal && sponsoredDetails && (
+        <Modal onClose={() => setShowSponsoredDetailsModal(null)}>
+          <div className="p-6">
+            <h2
+              className="text-xl font-bold mb-4"
+              style={{ color: theme.primary }}
+            >
+              Sponsored Opportunity Details
+            </h2>
+            {sponsoredDetailsLoading ? (
+              <div className="text-center py-8">Loading...</div>
+            ) : (
+              <div className="space-y-4">
+                <div>
+                  <h3 className="font-semibold mb-2">Opportunity</h3>
+                  <p className="text-gray-700">{sponsoredDetails.opportunity?.title}</p>
+                </div>
+                
+                <div>
+                  <h3 className="font-semibold mb-2">Sponsor</h3>
+                  <p className="text-gray-700">
+                    {sponsoredDetails.partner?.name || sponsoredDetails.partner?.company_name || 'Admin Sponsored'}
+                  </p>
+                </div>
+
+                <div>
+                  <h3 className="font-semibold mb-2">Campaign Link</h3>
+                  <p className="text-gray-700">
+                    {sponsoredDetails.ad_campaign_id ? `Campaign ID: ${sponsoredDetails.ad_campaign_id}` : 'No campaign linked'}
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <h3 className="font-semibold mb-2">Status</h3>
+                    <span
+                      className={`px-2 py-1 rounded-lg text-xs font-bold ${
+                        sponsoredDetails.status === 'active' || sponsoredDetails.status === 'approved'
+                          ? 'bg-green-100 text-green-800'
+                          : sponsoredDetails.status === 'pending'
+                          ? 'bg-yellow-100 text-yellow-800'
+                          : 'bg-red-100 text-red-800'
+                      }`}
+                    >
+                      {sponsoredDetails.status}
+                    </span>
+                  </div>
+                  
+                  <div>
+                    <h3 className="font-semibold mb-2">Payment Status</h3>
+                    <span
+                      className={`px-2 py-1 rounded-lg text-xs font-bold ${
+                        sponsoredDetails.payment_status === 'paid'
+                          ? 'bg-green-100 text-green-800'
+                          : 'bg-red-100 text-red-800'
+                      }`}
+                    >
+                      {sponsoredDetails.payment_status}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <h3 className="font-semibold mb-2">Sponsored From</h3>
+                    <p className="text-gray-700">
+                      {sponsoredDetails.sponsored_from ? new Date(sponsoredDetails.sponsored_from).toLocaleDateString() : 'N/A'}
+                    </p>
+                  </div>
+                  
+                  <div>
+                    <h3 className="font-semibold mb-2">Sponsored To</h3>
+                    <p className="text-gray-700">
+                      {sponsoredDetails.sponsored_to ? new Date(sponsoredDetails.sponsored_to).toLocaleDateString() : 'N/A'}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex gap-2 justify-end pt-4">
+                  <button
+                    className="px-4 py-2 rounded-lg bg-gray-100 text-gray-600 font-semibold shadow"
+                    onClick={() => setShowSponsoredDetailsModal(null)}
+                  >
+                    Close
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </Modal>
       )}

@@ -10,6 +10,7 @@ import {
   FaHandshake,
   FaSignOutAlt,
   FaBell,
+  FaAd,
 } from "react-icons/fa";
 import winjaIcon from "/winja-icon.png";
 import theme from "../theme";
@@ -30,6 +31,11 @@ const navItems = [
     label: "Partner Management",
     icon: <FaHandshake />,
     path: "/admin/partners",
+  },
+  {
+    label: "Ad Management",
+    icon: <FaAd />,
+    path: "/admin/ad-management",
   },
   {
     label: "Reports & Analytics",

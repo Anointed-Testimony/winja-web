@@ -9,6 +9,10 @@ import {
   FaDollarSign,
   FaTrash,
   FaCheckCircle,
+  FaPlus,
+  FaEdit,
+  FaWhatsapp,
+  FaEnvelope,
 } from "react-icons/fa";
 import {
   getSettings,
@@ -16,6 +20,10 @@ import {
   getPushNotifications,
   createPushNotification,
   deletePushNotification,
+  getSubscriptionPlans,
+  createSubscriptionPlan,
+  updateSubscriptionPlan,
+  deleteSubscriptionPlan,
 } from "../../api";
 import { toast } from "react-toastify";
 
@@ -23,8 +31,9 @@ const TABS = [
   { key: "app", label: "App Config", icon: <FaCog /> },
   { key: "notifications", label: "Notification Defaults", icon: <FaBell /> },
   { key: "push", label: "Push Notifications", icon: <FaBullhorn /> },
+  { key: "subscriptions", label: "Subscription Plans", icon: <FaDollarSign /> },
+  { key: "integrations", label: "Integrations", icon: <FaWhatsapp /> },
   { key: "logs", label: "System Logs", icon: <FaFileAlt /> },
-  { key: "pricing", label: "Pricing", icon: <FaDollarSign /> },
 ];
 
 export default function Settings() {
@@ -40,6 +49,20 @@ export default function Settings() {
   const [notifError, setNotifError] = useState(null);
   const [notifForm, setNotifForm] = useState({ message: "", scheduled_at: "" });
   const [notifSaving, setNotifSaving] = useState(false);
+
+  // Subscription plans
+  const [plans, setPlans] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [showPlanModal, setShowPlanModal] = useState(false);
+  const [planForm, setPlanForm] = useState({
+    name: "",
+    description: "",
+    price: "",
+    duration_months: "",
+    features: [],
+    status: "active"
+  });
 
   // Fetch settings on mount
   useEffect(() => {
@@ -58,6 +81,13 @@ export default function Settings() {
         .then((res) => setNotifications(res.data))
         .catch(() => setNotifError("Failed to load notifications."))
         .finally(() => setNotifLoading(false));
+    }
+  }, [tab]);
+
+  // Fetch subscription plans on mount/tab change
+  useEffect(() => {
+    if (tab === "subscriptions") {
+      loadPlans();
     }
   }, [tab]);
 
@@ -108,6 +138,46 @@ export default function Settings() {
       setNotifications((prev) => prev.filter((n) => n.id !== id));
     } catch (e) {
       toast.error("Failed to delete notification.");
+    }
+  };
+
+  // Subscription plan handlers
+  const loadPlans = async () => {
+    try {
+      const res = await getSubscriptionPlans();
+      setPlans(res.data.plans);
+    } catch (err) {
+      setError("Failed to load subscription plans");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handlePlanSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      if (planForm.id) {
+        await updateSubscriptionPlan(planForm.id, planForm);
+        toast.success("Plan updated successfully");
+      } else {
+        await createSubscriptionPlan(planForm);
+        toast.success("Plan created successfully");
+      }
+      setShowPlanModal(false);
+      loadPlans();
+    } catch (err) {
+      toast.error(err?.response?.data?.message || "Failed to save plan");
+    }
+  };
+
+  const handleDeletePlan = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this plan?")) return;
+    try {
+      await deleteSubscriptionPlan(id);
+      toast.success("Plan deleted successfully");
+      loadPlans();
+    } catch (err) {
+      toast.error("Failed to delete plan");
     }
   };
 
@@ -170,14 +240,27 @@ export default function Settings() {
                     onNotifDelete={handleNotifDelete}
                   />
                 )}
-                {tab === "logs" && <SystemLogsSection />}
-                {tab === "pricing" && (
-                  <PricingSection
+                {tab === "subscriptions" && (
+                  <SubscriptionPlansSection
+                    plans={plans}
+                    loading={loading}
+                    error={error}
+                    showPlanModal={showPlanModal}
+                    setShowPlanModal={setShowPlanModal}
+                    planForm={planForm}
+                    setPlanForm={setPlanForm}
+                    onPlanSubmit={handlePlanSubmit}
+                    onDeletePlan={handleDeletePlan}
+                  />
+                )}
+                {tab === "integrations" && (
+                  <IntegrationsSection
                     settings={settings}
                     onSave={handleSaveSettings}
                     saving={saving}
                   />
                 )}
+                {tab === "logs" && <SystemLogsSection />}
               </>
             )}
           </div>
@@ -443,6 +526,492 @@ function PushNotificationsSection({
   );
 }
 
+function SubscriptionPlansSection({
+  plans = [],
+  loading,
+  error,
+  showPlanModal,
+  setShowPlanModal,
+  planForm,
+  setPlanForm,
+  onPlanSubmit,
+  onDeletePlan,
+}) {
+  if (loading) return <div>Loading plans...</div>;
+  if (error) return <div className="text-red-500">{error}</div>;
+  
+  // Ensure plans is an array
+  const plansList = Array.isArray(plans) ? plans : [];
+
+  const durationOptions = [
+    { value: 1, label: 'Monthly' },
+    { value: 3, label: 'Quarterly' },
+    { value: 12, label: 'Yearly' }
+  ];
+
+  return (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <h3 className="text-xl font-bold text-gray-800">
+          Subscription Plans
+        </h3>
+        <button
+          onClick={() => {
+            setPlanForm({
+              name: "",
+              price: "",
+              duration_months: 1,
+              features: [],
+              status: "active"
+            });
+            setShowPlanModal(true);
+          }}
+          className="flex items-center gap-2 px-4 py-2 rounded-xl bg-purple-600 text-white hover:bg-purple-700 transition"
+        >
+          <FaPlus /> Add Plan
+        </button>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {plansList.map((plan) => (
+          <div
+            key={plan.id}
+            className="rounded-2xl shadow-lg p-6 border border-gray-100"
+          >
+            <div className="flex justify-between items-start mb-4">
+              <div>
+                <h4 className="text-lg font-bold text-gray-800">{plan.name}</h4>
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => {
+                    setPlanForm(plan);
+                    setShowPlanModal(true);
+                  }}
+                  className="p-2 text-gray-600 hover:text-purple-600"
+                >
+                  <FaEdit />
+                </button>
+                <button
+                  onClick={() => onDeletePlan(plan.id)}
+                  className="p-2 text-gray-600 hover:text-red-600"
+                >
+                  <FaTrash />
+                </button>
+              </div>
+            </div>
+            <div className="space-y-4">
+              <div className="flex justify-between items-center">
+                <span className="text-2xl font-bold text-gray-800">₦{plan.price}</span>
+                <span className="text-sm text-gray-800">
+                  {plan.duration_months === 1 ? 'Monthly' :
+                   plan.duration_months === 3 ? 'Quarterly' :
+                   plan.duration_months === 12 ? 'Yearly' :
+                   `${plan.duration_months} months`}
+                </span>
+              </div>
+              <div className="space-y-2">
+                {plan.features.map((feature, index) => (
+                  <div key={index} className="flex items-center gap-2">
+                    <FaCheckCircle className="text-green-500" />
+                    <span className="text-sm text-gray-800">{feature}</span>
+                  </div>
+                ))}
+              </div>
+              <div className="pt-4">
+                <span
+                  className={`px-3 py-1 rounded-full text-sm ${
+                    plan.status === "active"
+                      ? "bg-green-100 text-green-800"
+                      : "bg-gray-100 text-gray-800"
+                  }`}
+                >
+                  {plan.status}
+                </span>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Plan Modal */}
+      {showPlanModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-lg">
+            <h3 className="text-xl font-bold mb-4 text-gray-800">
+              {planForm.id ? "Edit Plan" : "Add New Plan"}
+            </h3>
+            <form onSubmit={onPlanSubmit} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-1 text-gray-800">Name</label>
+                <input
+                  type="text"
+                  value={planForm.name}
+                  onChange={(e) =>
+                    setPlanForm({ ...planForm, name: e.target.value })
+                  }
+                  className="w-full rounded-xl border p-2 text-gray-800"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1 text-gray-800">Price (₦)</label>
+                <input
+                  type="number"
+                  value={planForm.price}
+                  onChange={(e) =>
+                    setPlanForm({ ...planForm, price: e.target.value })
+                  }
+                  className="w-full rounded-xl border p-2 text-gray-800"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1 text-gray-800">
+                  Duration
+                </label>
+                <select
+                  value={planForm.duration_months}
+                  onChange={(e) =>
+                    setPlanForm({
+                      ...planForm,
+                      duration_months: parseInt(e.target.value),
+                    })
+                  }
+                  className="w-full rounded-xl border p-2 text-gray-800"
+                  required
+                >
+                  {durationOptions.map(option => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1 text-gray-800">Features</label>
+                <div className="space-y-2">
+                  {planForm.features.map((feature, index) => (
+                    <div key={index} className="flex gap-2">
+                      <input
+                        type="text"
+                        value={feature}
+                        onChange={(e) => {
+                          const newFeatures = [...planForm.features];
+                          newFeatures[index] = e.target.value;
+                          setPlanForm({ ...planForm, features: newFeatures });
+                        }}
+                        className="flex-1 rounded-xl border p-2 text-gray-800"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const newFeatures = planForm.features.filter(
+                            (_, i) => i !== index
+                          );
+                          setPlanForm({ ...planForm, features: newFeatures });
+                        }}
+                        className="p-2 text-red-600"
+                      >
+                        <FaTrash />
+                      </button>
+                    </div>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setPlanForm({
+                        ...planForm,
+                        features: [...planForm.features, ""],
+                      })
+                    }
+                    className="text-sm text-purple-600 hover:text-purple-700"
+                  >
+                    + Add Feature
+                  </button>
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1 text-gray-800">Status</label>
+                <select
+                  value={planForm.status}
+                  onChange={(e) =>
+                    setPlanForm({ ...planForm, status: e.target.value })
+                  }
+                  className="w-full rounded-xl border p-2 text-gray-800"
+                >
+                  <option value="active">Active</option>
+                  <option value="inactive">Inactive</option>
+                </select>
+              </div>
+              <div className="flex justify-end gap-4 pt-4">
+                <button
+                  type="button"
+                  onClick={() => setShowPlanModal(false)}
+                  className="px-4 py-2 rounded-xl border hover:bg-gray-50 text-gray-800"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 rounded-xl bg-purple-600 text-white hover:bg-purple-700"
+                >
+                  {planForm.id ? "Update Plan" : "Create Plan"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function IntegrationsSection({ settings, onSave, saving }) {
+  const [form, setForm] = useState({
+    whatsapp_api_key: settings?.whatsapp_api_key || "",
+    whatsapp_phone_number: settings?.whatsapp_phone_number || "",
+    whatsapp_business_id: settings?.whatsapp_business_id || "",
+    email_smtp_host: settings?.email_smtp_host || "",
+    email_smtp_port: settings?.email_smtp_port || "",
+    email_smtp_user: settings?.email_smtp_user || "",
+    email_smtp_password: settings?.email_smtp_password || "",
+    email_from_address: settings?.email_from_address || "",
+    email_from_name: settings?.email_from_name || "",
+  });
+
+  const [templates, setTemplates] = useState({
+    welcome_email: settings?.templates?.welcome_email || "",
+    subscription_confirmation: settings?.templates?.subscription_confirmation || "",
+    subscription_expiring: settings?.templates?.subscription_expiring || "",
+    subscription_expired: settings?.templates?.subscription_expired || "",
+    whatsapp_welcome: settings?.templates?.whatsapp_welcome || "",
+    whatsapp_subscription: settings?.templates?.whatsapp_subscription || "",
+  });
+
+  const handleChange = (e) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+  };
+
+  const handleTemplateChange = (e) => {
+    setTemplates({ ...templates, [e.target.name]: e.target.value });
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    await onSave({
+      ...form,
+      templates,
+    });
+  };
+
+  return (
+    <div className="space-y-8">
+      <SectionHeader
+        icon={<FaWhatsapp />}
+        title="WhatsApp Integration"
+        desc="Configure WhatsApp Business API settings for notifications"
+      />
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label className="block text-sm font-medium mb-1">
+              WhatsApp API Key
+            </label>
+            <input
+              type="password"
+              name="whatsapp_api_key"
+              value={form.whatsapp_api_key}
+              onChange={handleChange}
+              className="w-full rounded-xl border p-2"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">
+              WhatsApp Phone Number
+            </label>
+            <input
+              type="text"
+              name="whatsapp_phone_number"
+              value={form.whatsapp_phone_number}
+              onChange={handleChange}
+              className="w-full rounded-xl border p-2"
+              placeholder="+1234567890"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">
+              WhatsApp Business ID
+            </label>
+            <input
+              type="text"
+              name="whatsapp_business_id"
+              value={form.whatsapp_business_id}
+              onChange={handleChange}
+              className="w-full rounded-xl border p-2"
+            />
+          </div>
+        </div>
+
+        <SectionHeader
+          icon={<FaEnvelope />}
+          title="Email Settings"
+          desc="Configure SMTP settings for email notifications"
+        />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label className="block text-sm font-medium mb-1">SMTP Host</label>
+            <input
+              type="text"
+              name="email_smtp_host"
+              value={form.email_smtp_host}
+              onChange={handleChange}
+              className="w-full rounded-xl border p-2"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">SMTP Port</label>
+            <input
+              type="number"
+              name="email_smtp_port"
+              value={form.email_smtp_port}
+              onChange={handleChange}
+              className="w-full rounded-xl border p-2"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">SMTP User</label>
+            <input
+              type="text"
+              name="email_smtp_user"
+              value={form.email_smtp_user}
+              onChange={handleChange}
+              className="w-full rounded-xl border p-2"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">
+              SMTP Password
+            </label>
+            <input
+              type="password"
+              name="email_smtp_password"
+              value={form.email_smtp_password}
+              onChange={handleChange}
+              className="w-full rounded-xl border p-2"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">
+              From Address
+            </label>
+            <input
+              type="email"
+              name="email_from_address"
+              value={form.email_from_address}
+              onChange={handleChange}
+              className="w-full rounded-xl border p-2"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">From Name</label>
+            <input
+              type="text"
+              name="email_from_name"
+              value={form.email_from_name}
+              onChange={handleChange}
+              className="w-full rounded-xl border p-2"
+            />
+          </div>
+        </div>
+
+        <SectionHeader
+          icon={<FaFileAlt />}
+          title="Notification Templates"
+          desc="Customize email and WhatsApp notification templates"
+        />
+        <div className="space-y-6">
+          <div>
+            <label className="block text-sm font-medium mb-1">
+              Welcome Email Template
+            </label>
+            <textarea
+              name="welcome_email"
+              value={templates.welcome_email}
+              onChange={handleTemplateChange}
+              rows="4"
+              className="w-full rounded-xl border p-2"
+              placeholder="Welcome to Winja! We're excited to have you on board..."
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">
+              Subscription Confirmation Email
+            </label>
+            <textarea
+              name="subscription_confirmation"
+              value={templates.subscription_confirmation}
+              onChange={handleTemplateChange}
+              rows="4"
+              className="w-full rounded-xl border p-2"
+              placeholder="Thank you for subscribing to Winja Premium..."
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">
+              Subscription Expiring Email
+            </label>
+            <textarea
+              name="subscription_expiring"
+              value={templates.subscription_expiring}
+              onChange={handleTemplateChange}
+              rows="4"
+              className="w-full rounded-xl border p-2"
+              placeholder="Your Winja Premium subscription will expire soon..."
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">
+              WhatsApp Welcome Message
+            </label>
+            <textarea
+              name="whatsapp_welcome"
+              value={templates.whatsapp_welcome}
+              onChange={handleTemplateChange}
+              rows="4"
+              className="w-full rounded-xl border p-2"
+              placeholder="Welcome to Winja! We'll keep you updated on new opportunities..."
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">
+              WhatsApp Subscription Message
+            </label>
+            <textarea
+              name="whatsapp_subscription"
+              value={templates.whatsapp_subscription}
+              onChange={handleTemplateChange}
+              rows="4"
+              className="w-full rounded-xl border p-2"
+              placeholder="Thank you for subscribing to Winja Premium..."
+            />
+          </div>
+        </div>
+
+        <div className="flex justify-end">
+          <button
+            type="submit"
+            disabled={saving}
+            className="px-6 py-3 rounded-xl bg-purple-600 text-white hover:bg-purple-700 transition disabled:opacity-50"
+          >
+            {saving ? "Saving..." : "Save Changes"}
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+}
+
 function SystemLogsSection() {
   return (
     <div>
@@ -486,71 +1055,6 @@ function SystemLogsSection() {
           </tbody>
         </table>
       </div>
-    </div>
-  );
-}
-
-function PricingSection({ settings, onSave, saving }) {
-  const [form, setForm] = useState({
-    sponsor_price: settings?.sponsor_price || 20,
-    premium_price: settings?.premium_price || 10,
-  });
-  useEffect(() => {
-    setForm({
-      sponsor_price: settings?.sponsor_price || 20,
-      premium_price: settings?.premium_price || 10,
-    });
-  }, [settings]);
-  const handleChange = (e) => {
-    setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
-  };
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    onSave({
-      sponsor_price: form.sponsor_price,
-      premium_price: form.premium_price,
-    });
-  };
-  return (
-    <div>
-      <SectionHeader
-        icon={<FaDollarSign />}
-        title="Pricing"
-        desc="Set prices for sponsoring and premium features."
-      />
-      <form className="space-y-6 max-w-lg" onSubmit={handleSubmit}>
-        <div>
-          <label className="block font-medium mb-1">Sponsor Price ($)</label>
-          <input
-            name="sponsor_price"
-            className="w-full border rounded-lg p-3 bg-gray-50"
-            type="number"
-            value={form.sponsor_price}
-            onChange={handleChange}
-          />
-        </div>
-        <div>
-          <label className="block font-medium mb-1">
-            Premium Feature Price ($)
-          </label>
-          <input
-            name="premium_price"
-            className="w-full border rounded-lg p-3 bg-gray-50"
-            type="number"
-            value={form.premium_price}
-            onChange={handleChange}
-          />
-        </div>
-        <div className="pt-2">
-          <button
-            type="submit"
-            className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-lg font-semibold shadow transition"
-            disabled={saving}
-          >
-            {saving ? "Saving..." : "Save"}
-          </button>
-        </div>
-      </form>
     </div>
   );
 }

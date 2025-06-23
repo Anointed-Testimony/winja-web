@@ -33,6 +33,7 @@ import Analytics from "./pages/admin/Analytics";
 import Referrals from "./pages/admin/Referrals";
 import Moderation from "./pages/admin/Moderation";
 import Settings from "./pages/admin/Settings";
+import AdManagement from "./pages/admin/AdManagement";
 
 function AnimatedGradientBG() {
   return (
@@ -116,6 +117,14 @@ function App() {
           element={
             <ProtectedRoute>
               <Settings />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/ad-management"
+          element={
+            <ProtectedRoute>
+              <AdManagement />
             </ProtectedRoute>
           }
         />

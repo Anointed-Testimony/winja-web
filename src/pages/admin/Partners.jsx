@@ -18,6 +18,12 @@ import {
   FaUsers,
   FaMoneyBillWave,
   FaCalendarAlt,
+  FaEye,
+  FaGlobe,
+  FaPhone,
+  FaUser,
+  FaIdCard,
+  FaMapMarkerAlt,
 } from "react-icons/fa";
 import theme from "../../theme";
 import {
@@ -471,25 +477,7 @@ export default function Partners() {
                   </div>
                   <div className="flex gap-2 items-center mt-4 md:mt-0">
                     <button
-                      className="p-2 rounded-lg shadow transition"
-                      style={{ background: theme.accent, color: theme.primary }}
-                      title="Edit"
-                      onClick={() => {
-                        setShowPartnerModal(p.id);
-                        setPartnerForm({
-                          company_name: p.company_name,
-                          company_description: p.company_description,
-                          company_website: p.company_website,
-                          company_logo: null,
-                          partner_status: p.partner_status,
-                        });
-                      }}
-                      disabled={partnerLoading}
-                    >
-                      <FaEdit />
-                    </button>
-                    <button
-                      className="p-2 rounded-lg shadow transition"
+                      className="p-2 rounded-lg shadow transition hover:scale-105"
                       style={{
                         background: theme.primary,
                         color: theme.surface,
@@ -497,7 +485,7 @@ export default function Partners() {
                       title="View Details"
                       onClick={() => setSelectedPartner(p)}
                     >
-                      <FaListAlt />
+                      <FaEye />
                     </button>
                   </div>
                 </div>
@@ -712,13 +700,65 @@ export default function Partners() {
       {/* Partner Details Modal */}
       {selectedPartner && (
         <Modal onClose={() => setSelectedPartner(null)}>
-          <div className="p-6">
-            <h2
-              className="text-xl font-bold mb-4"
-              style={{ color: theme.primary }}
-            >
+          <div className="p-6 max-w-4xl w-full">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-bold" style={{ color: theme.primary }}>
               Partner Details
             </h2>
+              <div className="flex gap-2">
+                <button
+                  className="px-4 py-2 rounded-lg shadow transition flex items-center gap-2"
+                  style={{
+                    background: theme.success + "22",
+                    color: theme.success,
+                  }}
+                  onClick={async () => {
+                    try {
+                      await updatePartner(selectedPartner.id, {
+                        partner_status: "active",
+                        verification_notes: "Partner approved by admin",
+                      });
+                      setPartners(partners.map(p => 
+                        p.id === selectedPartner.id 
+                          ? { ...p, partner_status: "active" }
+                          : p
+                      ));
+                      setSelectedPartner(null);
+                    } catch (err) {
+                      console.error("Failed to approve partner:", err);
+                    }
+                  }}
+                >
+                  <FaCheck /> Approve
+                </button>
+                <button
+                  className="px-4 py-2 rounded-lg shadow transition flex items-center gap-2"
+                  style={{
+                    background: theme.error + "22",
+                    color: theme.error,
+                  }}
+                  onClick={async () => {
+                    try {
+                      await updatePartner(selectedPartner.id, {
+                        partner_status: "suspended",
+                        verification_notes: "Partner suspended by admin",
+                      });
+                      setPartners(partners.map(p => 
+                        p.id === selectedPartner.id 
+                          ? { ...p, partner_status: "suspended" }
+                          : p
+                      ));
+                      setSelectedPartner(null);
+                    } catch (err) {
+                      console.error("Failed to suspend partner:", err);
+                    }
+                  }}
+                >
+                  <FaTimes /> Reject
+                </button>
+              </div>
+            </div>
+
             {metricsError && (
               <div
                 className="mb-4 p-3 rounded-lg text-sm"
@@ -727,23 +767,136 @@ export default function Partners() {
                 {metricsError}
               </div>
             )}
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Company Information */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold" style={{ color: theme.text }}>
+                  Company Information
+                </h3>
+                <div className="space-y-3">
+                  <div className="flex items-start gap-3">
+                    <FaBuilding className="mt-1" style={{ color: theme.primary }} />
+                    <div>
+                      <div className="font-medium" style={{ color: theme.text }}>
+                        Company Name
+                      </div>
+                      <div style={{ color: theme.textLight }}>
+                        {selectedPartner.company_name}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <FaGlobe className="mt-1" style={{ color: theme.primary }} />
+                    <div>
+                      <div className="font-medium" style={{ color: theme.text }}>
+                        Website
+                      </div>
+                      <a
+                        href={selectedPartner.company_website}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-500 hover:underline"
+                      >
+                        {selectedPartner.company_website}
+                      </a>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <FaIdCard className="mt-1" style={{ color: theme.primary }} />
+                    <div>
+                      <div className="font-medium" style={{ color: theme.text }}>
+                        Business Registration
+                      </div>
+                      <div style={{ color: theme.textLight }}>
+                        {selectedPartner.business_registration_number}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <FaIdCard className="mt-1" style={{ color: theme.primary }} />
+                    <div>
+                      <div className="font-medium" style={{ color: theme.text }}>
+                        Tax ID
+                      </div>
+                      <div style={{ color: theme.textLight }}>
+                        {selectedPartner.tax_identification_number}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <FaMapMarkerAlt className="mt-1" style={{ color: theme.primary }} />
+                    <div>
+                      <div className="font-medium" style={{ color: theme.text }}>
+                        Business Address
+                      </div>
+                      <div style={{ color: theme.textLight }}>
+                        {selectedPartner.business_address}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Contact Information */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold" style={{ color: theme.text }}>
+                  Contact Information
+                </h3>
+                <div className="space-y-3">
+                  <div className="flex items-start gap-3">
+                    <FaUser className="mt-1" style={{ color: theme.primary }} />
+                    <div>
+                      <div className="font-medium" style={{ color: theme.text }}>
+                        Contact Person
+                      </div>
+                      <div style={{ color: theme.textLight }}>
+                        {selectedPartner.contact_person_name}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <FaUser className="mt-1" style={{ color: theme.primary }} />
+                    <div>
+                      <div className="font-medium" style={{ color: theme.text }}>
+                        Position
+                      </div>
+                      <div style={{ color: theme.textLight }}>
+                        {selectedPartner.contact_person_position}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <FaPhone className="mt-1" style={{ color: theme.primary }} />
+                    <div>
+                      <div className="font-medium" style={{ color: theme.text }}>
+                        Phone
+                      </div>
+                      <div style={{ color: theme.textLight }}>
+                        {selectedPartner.contact_person_phone}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Partner Metrics */}
             {metricsLoading ? (
-              <div className="text-center py-8">Loading metrics...</div>
+                <div className="col-span-2 text-center py-8" style={{ color: theme.text }}>
+                  Loading metrics...
+                </div>
             ) : (
               partnerMetrics && (
-                <div className="grid grid-cols-2 gap-4 mb-6">
+                  <div className="col-span-2 grid grid-cols-1 md:grid-cols-4 gap-4">
                   <div
                     className="p-4 rounded-xl"
                     style={{ background: theme.surfaceGlass }}
                   >
                     <div className="flex items-center gap-2 mb-2">
                       <FaListAlt style={{ color: theme.primary }} />
-                      <span className="font-semibold">Total Sponsored</span>
+                      <span className="font-semibold" style={{ color: theme.text }}>Total Sponsored</span>
                     </div>
-                    <div
-                      className="text-2xl font-bold"
-                      style={{ color: theme.text }}
-                    >
+                      <div className="text-2xl font-bold" style={{ color: theme.text }}>
                       {partnerMetrics.total_sponsored}
                     </div>
                   </div>
@@ -753,12 +906,9 @@ export default function Partners() {
                   >
                     <div className="flex items-center gap-2 mb-2">
                       <FaCheckCircle style={{ color: theme.success }} />
-                      <span className="font-semibold">Active Sponsored</span>
+                      <span className="font-semibold" style={{ color: theme.text }}>Active Sponsored</span>
                     </div>
-                    <div
-                      className="text-2xl font-bold"
-                      style={{ color: theme.text }}
-                    >
+                      <div className="text-2xl font-bold" style={{ color: theme.text }}>
                       {partnerMetrics.active_sponsored}
                     </div>
                   </div>
@@ -768,12 +918,9 @@ export default function Partners() {
                   >
                     <div className="flex items-center gap-2 mb-2">
                       <FaMoneyBillWave style={{ color: theme.warning }} />
-                      <span className="font-semibold">Total Spend</span>
+                      <span className="font-semibold" style={{ color: theme.text }}>Total Spend</span>
                     </div>
-                    <div
-                      className="text-2xl font-bold"
-                      style={{ color: theme.text }}
-                    >
+                      <div className="text-2xl font-bold" style={{ color: theme.text }}>
                       ${partnerMetrics.total_spend}
                     </div>
                   </div>
@@ -783,21 +930,46 @@ export default function Partners() {
                   >
                     <div className="flex items-center gap-2 mb-2">
                       <FaCalendarAlt style={{ color: theme.info }} />
-                      <span className="font-semibold">Partner Since</span>
+                      <span className="font-semibold" style={{ color: theme.text }}>Partner Since</span>
                     </div>
-                    <div
-                      className="text-2xl font-bold"
-                      style={{ color: theme.text }}
-                    >
-                      {new Date(
-                        partnerMetrics.partner_since
-                      ).toLocaleDateString()}
+                      <div className="text-2xl font-bold" style={{ color: theme.text }}>
+                        {new Date(partnerMetrics.partner_since).toLocaleDateString()}
                     </div>
                   </div>
                 </div>
               )
             )}
-            <div className="flex gap-2 justify-end">
+
+              {/* Verification Documents */}
+              {selectedPartner.verification_documents && (
+                <div className="col-span-2 space-y-4">
+                  <h3 className="text-lg font-semibold" style={{ color: theme.text }}>
+                    Verification Documents
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {JSON.parse(selectedPartner.verification_documents).map((doc, index) => (
+                      <a
+                        key={index}
+                        href={doc}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="p-4 rounded-xl hover:shadow-lg transition"
+                        style={{ background: theme.surfaceGlass }}
+                      >
+                        <div className="flex items-center gap-2">
+                          <FaIdCard style={{ color: theme.primary }} />
+                          <span style={{ color: theme.text }}>
+                            Document {index + 1}
+                          </span>
+                        </div>
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="flex gap-2 justify-end mt-6">
               <button
                 className="px-4 py-2 rounded-lg bg-gray-100 text-gray-600 font-semibold shadow"
                 onClick={() => setSelectedPartner(null)}
