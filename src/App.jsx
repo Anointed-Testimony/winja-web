@@ -34,6 +34,7 @@ import Referrals from "./pages/admin/Referrals";
 import Moderation from "./pages/admin/Moderation";
 import Settings from "./pages/admin/Settings";
 import AdManagement from "./pages/admin/AdManagement";
+import HomePage from "./pages/HomePage";
 
 function AnimatedGradientBG() {
   return (
@@ -54,7 +55,7 @@ function App() {
   return (
     <AuthProvider>
       <Routes>
-        <Route path="/" element={<Navigate to="/admin/dashboard" replace />} />
+        <Route path="/" element={<HomePage />} />
         <Route path="/admin/login" element={<AdminLogin />} />
         <Route
           path="/admin/dashboard"
