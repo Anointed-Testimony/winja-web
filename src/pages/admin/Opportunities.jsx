@@ -31,6 +31,7 @@ import {
   updateSponsoredOpportunity,
   getAllPartners,
 } from "../../api";
+import { Editor } from '@tinymce/tinymce-react';
 
 const mockTypes = [
   { id: 1, name: "Grant", count: 12 },
@@ -1067,34 +1068,33 @@ export default function Opportunities() {
                 Verified
               </label>
             </div>
-            <textarea
-              className="rounded-lg border px-4 py-2"
-              style={{
-                borderColor: theme.border,
-                background: theme.surfaceGlass,
-                color: theme.text,
-              }}
-              placeholder="Description"
+            <label className="font-semibold mb-1" style={{ color: theme.primary }}>
+              Description
+            </label>
+            <Editor
+              apiKey="mkyaup5rx10x4g0h9h3iqvea4fx46wl690xfxnfu1c1ssrev"
               value={listingForm.description}
-              onChange={(e) =>
-                setListingForm((f) => ({ ...f, description: e.target.value }))
-              }
-              rows={3}
-              required
-            />
-            <input
-              className="rounded-lg border px-4 py-2"
-              style={{
-                borderColor: theme.border,
-                background: theme.surfaceGlass,
-                color: theme.text,
+              init={{
+                plugins: 'anchor autolink charmap codesample emoticons image link lists media searchreplace table visualblocks wordcount',
+                toolbar: 'undo redo | blocks fontfamily fontsize | bold italic underline strikethrough | link image media table | align lineheight | numlist bullist indent outdent | emoticons charmap | removeformat',
+                menubar: false,
+                height: 300,
               }}
-              placeholder="Eligibility (e.g. 18–30, Nigeria only)"
+              onEditorChange={(content) => setListingForm((f) => ({ ...f, description: content }))}
+            />
+            <label className="font-semibold mb-1 mt-4" style={{ color: theme.primary }}>
+              Eligibility
+            </label>
+            <Editor
+              apiKey="mkyaup5rx10x4g0h9h3iqvea4fx46wl690xfxnfu1c1ssrev"
               value={listingForm.eligibility}
-              onChange={(e) =>
-                setListingForm((f) => ({ ...f, eligibility: e.target.value }))
-              }
-              required
+              init={{
+                plugins: 'anchor autolink charmap codesample emoticons image link lists media searchreplace table visualblocks wordcount',
+                toolbar: 'undo redo | blocks fontfamily fontsize | bold italic underline strikethrough | link image media table | align lineheight | numlist bullist indent outdent | emoticons charmap | removeformat',
+                menubar: false,
+                height: 200,
+              }}
+              onEditorChange={(content) => setListingForm((f) => ({ ...f, eligibility: content }))}
             />
             <input
               className="rounded-lg border px-4 py-2"
@@ -1284,34 +1284,33 @@ export default function Opportunities() {
                 Verified
               </label>
             </div>
-            <textarea
-              className="rounded-lg border px-4 py-2"
-              style={{
-                borderColor: theme.border,
-                background: theme.surfaceGlass,
-                color: theme.text,
-              }}
-              placeholder="Description"
+            <label className="font-semibold mb-1" style={{ color: theme.primary }}>
+              Description
+            </label>
+            <Editor
+              apiKey="mkyaup5rx10x4g0h9h3iqvea4fx46wl690xfxnfu1c1ssrev"
               value={listingForm.description}
-              onChange={(e) =>
-                setListingForm((f) => ({ ...f, description: e.target.value }))
-              }
-              rows={3}
-              required
-            />
-            <input
-              className="rounded-lg border px-4 py-2"
-              style={{
-                borderColor: theme.border,
-                background: theme.surfaceGlass,
-                color: theme.text,
+              init={{
+                plugins: 'anchor autolink charmap codesample emoticons image link lists media searchreplace table visualblocks wordcount',
+                toolbar: 'undo redo | blocks fontfamily fontsize | bold italic underline strikethrough | link image media table | align lineheight | numlist bullist indent outdent | emoticons charmap | removeformat',
+                menubar: false,
+                height: 300,
               }}
-              placeholder="Eligibility (e.g. 18–30, Nigeria only)"
+              onEditorChange={(content) => setListingForm((f) => ({ ...f, description: content }))}
+            />
+            <label className="font-semibold mb-1 mt-4" style={{ color: theme.primary }}>
+              Eligibility
+            </label>
+            <Editor
+              apiKey="mkyaup5rx10x4g0h9h3iqvea4fx46wl690xfxnfu1c1ssrev"
               value={listingForm.eligibility}
-              onChange={(e) =>
-                setListingForm((f) => ({ ...f, eligibility: e.target.value }))
-              }
-              required
+              init={{
+                plugins: 'anchor autolink charmap codesample emoticons image link lists media searchreplace table visualblocks wordcount',
+                toolbar: 'undo redo | blocks fontfamily fontsize | bold italic underline strikethrough | link image media table | align lineheight | numlist bullist indent outdent | emoticons charmap | removeformat',
+                menubar: false,
+                height: 200,
+              }}
+              onEditorChange={(content) => setListingForm((f) => ({ ...f, eligibility: content }))}
             />
             <input
               className="rounded-lg border px-4 py-2"
@@ -1793,6 +1792,10 @@ function Modal({ children, onClose }) {
         style={{
           background: theme.surfaceGlass,
           border: `1px solid ${theme.border}`,
+          width: 700,
+          height: '80vh',
+          overflowY: 'auto',
+          maxWidth: '95vw',
         }}
       >
         <button

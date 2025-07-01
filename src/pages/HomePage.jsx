@@ -212,7 +212,7 @@ export default function HomePage() {
                         </span>
                       </div>
                       <h3 className="text-xl font-semibold text-[#5b2be7] mb-2 mt-2">{opp.title}</h3>
-                      <p className="text-gray-600 mb-2 line-clamp-3">{opp.description || opp.sponsor || "Opportunity details coming soon."}</p>
+                      <p className="text-gray-600 mb-2 line-clamp-3" dangerouslySetInnerHTML={{ __html: opp.description || opp.sponsor || "Opportunity details coming soon." }} />
                       <div className="flex items-center justify-between mt-4">
                         <span className="text-sm text-gray-500">{opp.sponsor || "Winja"}</span>
                         {opp.expiry && <span className="text-xs text-red-500">Expires: {opp.expiry}</span>}

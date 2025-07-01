@@ -1,7 +1,7 @@
 import axios from "axios";
 
 // Set your API base URL here
-const BASE_URL = "http://localhost:8000/api";
+const BASE_URL = "https://apiwinjav1.digitalentshub.net/api";
 
 export const api = axios.create({
   baseURL: BASE_URL,
